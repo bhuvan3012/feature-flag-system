@@ -1,6 +1,6 @@
-package com.yourpackage.repository;
+package com.featureflagsystem.repository;
 
-import com.yourpackage.model.FeatureFlag;
+import com.featureflagsystem.model.FeatureFlag;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 

@@ -1,10 +1,17 @@
-package com.yourpackage.service;
+package com.featureflagsystem.service;
 
-import com.yourpackage.model.FeatureFlag;
-import com.yourpackage.repository.FeatureFlagRepository;
+import com.featureflagsystem.dto.FeatureFlagRequest;
+import com.featureflagsystem.dto.FeatureFlagResponse;
+import com.featureflagsystem.exception.DuplicateResourceException;
+import com.featureflagsystem.exception.ResourceNotFoundException;
+import com.featureflagsystem.model.FeatureFlag;
+import com.featureflagsystem.repository.FeatureFlagRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class FeatureFlagService {
@@ -15,28 +22,81 @@ public class FeatureFlagService {
         this.repository = repository;
     }
 
-    public FeatureFlag createFlag(FeatureFlag flag) {
-        return repository.save(flag);
+    public FeatureFlagResponse createFlag(FeatureFlagRequest request) {
+        if (repository.findByName(request.getName()).isPresent()) {
+            throw new DuplicateResourceException("Feature flag with name '" + request.getName() + "' already exists");
+        }
+        
+        FeatureFlag flag = FeatureFlag.builder()
+                .name(request.getName())
+                .enabled(request.isEnabled())
+                .description(request.getDescription())
+                .environment(request.getEnvironment())
+                .rolloutPercentage(request.getRolloutPercentage())
+                .targetUserIds(request.getTargetUserIds())
+                .build();
+                
+        FeatureFlag saved = repository.save(flag);
+        return mapToResponse(saved);
     }
 
-    public List<FeatureFlag> getAllFlags() {
-        return repository.findAll();
+    public List<FeatureFlagResponse> getAllFlags() {
+        return repository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
-    public FeatureFlag getFlagByName(String name) {
-        return repository.findByName(name)
-                .orElseThrow(() -> new RuntimeException("Flag not found"));
+    @Cacheable(value = "featureFlags", key = "#name")
+    public FeatureFlagResponse getFlagByName(String name) {
+        FeatureFlag flag = repository.findByName(name)
+                .orElseThrow(() -> new ResourceNotFoundException("Flag '" + name + "' not found"));
+        return mapToResponse(flag);
     }
 
-    public FeatureFlag updateFlag(String name, FeatureFlag updated) {
-        FeatureFlag existing = getFlagByName(name);
-        existing.setEnabled(updated.isEnabled());
-        existing.setDescription(updated.getDescription());
-        return repository.save(existing);
+    @CacheEvict(value = "featureFlags", key = "#name")
+    public FeatureFlagResponse updateFlag(String name, FeatureFlagRequest request) {
+        FeatureFlag existing = repository.findByName(name)
+                .orElseThrow(() -> new ResourceNotFoundException("Flag '" + name + "' not found"));
+                
+        existing.setEnabled(request.isEnabled());
+        existing.setDescription(request.getDescription());
+        existing.setEnvironment(request.getEnvironment());
+        existing.setRolloutPercentage(request.getRolloutPercentage());
+        existing.setTargetUserIds(request.getTargetUserIds());
+        
+        FeatureFlag updated = repository.save(existing);
+        return mapToResponse(updated);
     }
 
+    @CacheEvict(value = "featureFlags", key = "#name")
     public void deleteFlag(String name) {
-        FeatureFlag flag = getFlagByName(name);
-        repository.delete(flag);
+        FeatureFlag existing = repository.findByName(name)
+                .orElseThrow(() -> new ResourceNotFoundException("Flag '" + name + "' not found"));
+        repository.delete(existing);
+    }
+
+    @CacheEvict(value = "featureFlags", key = "#name")
+    public FeatureFlagResponse toggleFlag(String name) {
+        FeatureFlag existing = repository.findByName(name)
+                .orElseThrow(() -> new ResourceNotFoundException("Flag '" + name + "' not found"));
+                
+        existing.setEnabled(!existing.isEnabled());
+        
+        FeatureFlag updated = repository.save(existing);
+        return mapToResponse(updated);
+    }
+    
+    private FeatureFlagResponse mapToResponse(FeatureFlag flag) {
+        return FeatureFlagResponse.builder()
+                .id(flag.getId())
+                .name(flag.getName())
+                .enabled(flag.isEnabled())
+                .description(flag.getDescription())
+                .environment(flag.getEnvironment())
+                .rolloutPercentage(flag.getRolloutPercentage())
+                .targetUserIds(flag.getTargetUserIds())
+                .createdAt(flag.getCreatedAt())
+                .updatedAt(flag.getUpdatedAt())
+                .build();
     }
 }
