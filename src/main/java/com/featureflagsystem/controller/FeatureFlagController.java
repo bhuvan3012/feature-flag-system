@@ -1,13 +1,17 @@
-package com.yourpackage.controller;
+package com.featureflagsystem.controller;
 
-import com.yourpackage.model.FeatureFlag;
-import com.yourpackage.service.FeatureFlagService;
+import com.featureflagsystem.dto.FeatureFlagRequest;
+import com.featureflagsystem.dto.FeatureFlagResponse;
+import com.featureflagsystem.service.FeatureFlagService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/flags")
+@RequestMapping("/api/v1/flags")
 public class FeatureFlagController {
 
     private final FeatureFlagService service;
@@ -17,28 +21,28 @@ public class FeatureFlagController {
     }
 
     @PostMapping
-    public FeatureFlag create(@RequestBody FeatureFlag flag) {
-        return service.createFlag(flag);
+    public ResponseEntity<FeatureFlagResponse> create(@Valid @RequestBody FeatureFlagRequest request) {
+        return new ResponseEntity<>(service.createFlag(request), HttpStatus.CREATED);
     }
 
     @GetMapping
-    public List<FeatureFlag> getAll() {
-        return service.getAllFlags();
+    public ResponseEntity<List<FeatureFlagResponse>> getAll() {
+        return ResponseEntity.ok(service.getAllFlags());
     }
 
     @GetMapping("/{name}")
-    public FeatureFlag getByName(@PathVariable String name) {
-        return service.getFlagByName(name);
+    public ResponseEntity<FeatureFlagResponse> getByName(@PathVariable String name) {
+        return ResponseEntity.ok(service.getFlagByName(name));
     }
 
     @PutMapping("/{name}")
-    public FeatureFlag update(@PathVariable String name, @RequestBody FeatureFlag flag) {
-        return service.updateFlag(name, flag);
+    public ResponseEntity<FeatureFlagResponse> update(@PathVariable String name, @Valid @RequestBody FeatureFlagRequest request) {
+        return ResponseEntity.ok(service.updateFlag(name, request));
     }
 
     @DeleteMapping("/{name}")
-    public String delete(@PathVariable String name) {
+    public ResponseEntity<String> delete(@PathVariable String name) {
         service.deleteFlag(name);
-        return "Deleted successfully";
+        return ResponseEntity.ok("Deleted successfully");
     }
 }
