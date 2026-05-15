@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feature Flags Console</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Ionicons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body>
+    <!-- Notification Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Login View -->
+    <div id="login-view" class="view active-view">
+        <div class="glass-card login-card">
+            <div class="logo">
+                <ion-icon name="options-outline"></ion-icon>
+                <h2>FlagDeck</h2>
+            </div>
+            <p class="subtitle">Sign in to manage your feature flags</p>
+            <form id="login-form">
+                <div class="input-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required placeholder="admin">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="view">
+        <aside class="sidebar glass-card">
+            <div class="logo">
+                <ion-icon name="options-outline"></ion-icon>
+                <h2>FlagDeck</h2>
+            </div>
+            <nav>
+                <a href="#" class="nav-item active" data-target="flags-section">
+                    <ion-icon name="flag-outline"></ion-icon> Feature Flags
+                </a>
+                <a href="#" class="nav-item" data-target="audit-section">
+                    <ion-icon name="list-outline"></ion-icon> Audit Logs
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <ion-icon name="person-circle-outline"></ion-icon>
+                    <span id="logged-in-user">Admin</span>
+                </div>
+                <button id="logout-btn" class="btn btn-text"><ion-icon name="log-out-outline"></ion-icon> Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <h1 id="page-title">Feature Flags</h1>
+                <div class="topbar-actions">
+                    <button id="new-flag-btn" class="btn btn-primary">
+                        <ion-icon name="add-outline"></ion-icon> New Flag
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- Flags Section -->
+                <section id="flags-section" class="section active-section">
+                    <div class="glass-card p-0">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Environment</th>
+                                    <th>Rollout</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="flags-tbody">
+                                <!-- Flags injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Audit Logs Section -->
+                <section id="audit-section" class="section">
+                    <div class="glass-card p-0">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Action</th>
+                                    <th>Flag Name</th>
+                                    <th>User</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-tbody">
+                                <!-- Logs injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Create/Edit -->
+    <div id="flag-modal" class="modal-overlay">
+        <div class="modal glass-card">
+            <div class="modal-header">
+                <h3 id="modal-title">Create Feature Flag</h3>
+                <button id="close-modal" class="btn-icon"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div class="modal-body">
+                <form id="flag-form">
+                    <div class="input-group">
+                        <label>Flag Name (Unique identifier)</label>
+                        <input type="text" id="flag-name" required placeholder="e.g. new-checkout-flow">
+                    </div>
+                    <div class="input-group">
+                        <label>Description</label>
+                        <input type="text" id="flag-desc" placeholder="Brief description of what this does">
+                    </div>
+                    <div class="row">
+                        <div class="input-group col">
+                            <label>Environment</label>
+                            <select id="flag-env">
+                                <option value="DEV">DEV</option>
+                                <option value="STAGING">STAGING</option>
+                                <option value="PROD" selected>PROD</option>
+                            </select>
+                        </div>
+                        <div class="input-group col">
+                            <label>Rollout Percentage (0-100)</label>
+                            <input type="number" id="flag-rollout" min="0" max="100" value="100">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Target User IDs (Comma separated)</label>
+                        <input type="text" id="flag-targets" placeholder="user_123, user_456">
+                    </div>
+                    <div class="input-group toggle-group">
+                        <label>Enable Globally</label>
+                        <label class="switch">
+                            <input type="checkbox" id="flag-enabled" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" id="cancel-modal" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Flag</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

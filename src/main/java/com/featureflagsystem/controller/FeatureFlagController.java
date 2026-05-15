@@ -45,4 +45,9 @@ public class FeatureFlagController {
         service.deleteFlag(name);
         return ResponseEntity.ok("Deleted successfully");
     }
+
+    @PutMapping("/{name}/toggle")
+    public ResponseEntity<FeatureFlagResponse> toggle(@PathVariable String name) {
+        return ResponseEntity.ok(service.toggleFlag(name));
+    }
 }
