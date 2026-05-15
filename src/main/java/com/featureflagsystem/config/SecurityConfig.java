@@ -32,10 +32,11 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/index.html", "/demo.html", "/css/**", "/js/**", "/favicon.ico").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers("/api/v1/evaluate/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/flags/**").authenticated()
                 .requestMatchers("/api/v1/flags/**").hasRole("ADMIN")
-                .requestMatchers("/api/v1/evaluate/**").authenticated()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

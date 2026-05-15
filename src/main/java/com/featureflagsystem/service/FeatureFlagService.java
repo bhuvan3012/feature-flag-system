@@ -17,9 +17,11 @@ import java.util.stream.Collectors;
 public class FeatureFlagService {
 
     private final FeatureFlagRepository repository;
+    private final AuditLogService auditLogService;
 
-    public FeatureFlagService(FeatureFlagRepository repository) {
+    public FeatureFlagService(FeatureFlagRepository repository, AuditLogService auditLogService) {
         this.repository = repository;
+        this.auditLogService = auditLogService;
     }
 
     public FeatureFlagResponse createFlag(FeatureFlagRequest request) {
@@ -37,6 +39,7 @@ public class FeatureFlagService {
                 .build();
                 
         FeatureFlag saved = repository.save(flag);
+        auditLogService.logAction("CREATE", saved.getName(), "Created flag with " + saved.getRolloutPercentage() + "% rollout in " + saved.getEnvironment());
         return mapToResponse(saved);
     }
 
@@ -65,6 +68,7 @@ public class FeatureFlagService {
         existing.setTargetUserIds(request.getTargetUserIds());
         
         FeatureFlag updated = repository.save(existing);
+        auditLogService.logAction("UPDATE", updated.getName(), "Updated flag configuration");
         return mapToResponse(updated);
     }
 
@@ -73,6 +77,7 @@ public class FeatureFlagService {
         FeatureFlag existing = repository.findByName(name)
                 .orElseThrow(() -> new ResourceNotFoundException("Flag '" + name + "' not found"));
         repository.delete(existing);
+        auditLogService.logAction("DELETE", name, "Deleted flag");
     }
 
     @CacheEvict(value = "featureFlags", key = "#name")
@@ -83,6 +88,7 @@ public class FeatureFlagService {
         existing.setEnabled(!existing.isEnabled());
         
         FeatureFlag updated = repository.save(existing);
+        auditLogService.logAction("TOGGLE", updated.getName(), "Toggled flag to: " + (updated.isEnabled() ? "ENABLED" : "DISABLED"));
         return mapToResponse(updated);
     }
     
