@@ -26,7 +26,7 @@ class EvaluationServiceTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openInMocks(this);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
