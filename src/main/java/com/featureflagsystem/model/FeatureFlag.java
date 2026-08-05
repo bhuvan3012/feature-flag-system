@@ -29,9 +29,11 @@ public class FeatureFlag {
 
     private String description;
 
+    @Builder.Default
     @Column(nullable = false)
     private String environment = "PROD"; // e.g., DEV, STAGING, PROD
 
+    @Builder.Default
     @Column(nullable = false)
     private int rolloutPercentage = 100; // 0 to 100
 
